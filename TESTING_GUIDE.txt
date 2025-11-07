@@ -1,0 +1,214 @@
+Testing Guide - Ad Bids Platform
+==================================
+
+STEP 1: Deploy Firebase Changes
+--------------------------------
+IMPORTANT: Before testing, deploy the updated rules and indexes:
+
+1. Open terminal in project directory
+2. Run: firebase deploy --only firestore:rules,firestore:indexes
+3. Wait for "Deploy complete!"
+
+STEP 2: Restart Dev Server
+---------------------------
+1. Stop dev server (Ctrl+C)
+2. Run: npm run dev
+3. Open: http://localhost:3000
+
+STEP 3: Test Advertiser Flow
+-----------------------------
+1. Click "Sign Up"
+2. Email: advertiser@gmail.com
+3. Password: test123
+4. Role: Advertiser
+5. Click "Create Account"
+
+6. Click "Create New Ad"
+7. Fill in:
+   - Title: "Youtube Views"
+   - Description: "Need youtube views"
+   - Target Link: https://www.youtube.com
+   - Bid Per View: 0.02 (₹0.02 per view)
+   - Total Budget: 100 (₹100 total)
+   - Upload an image
+8. Click "Create Ad"
+
+9. Verify dashboard shows:
+   ✓ Total Ads: 1
+   ✓ Total Spent: ₹0.00
+   ✓ Total Views: 0
+   ✓ Ad appears in "Your Ads" section
+   ✓ Status: Active
+
+STEP 4: Test Viewer Flow
+-------------------------
+1. Logout (click Logout button)
+2. Click "Sign Up"
+3. Email: viewer@gmail.com
+4. Password: test123
+5. Role: Viewer
+6. Click "Create Account"
+
+7. Verify viewer dashboard shows:
+   ✓ Total Earnings: ₹0.00
+   ✓ Total Views: 0
+   ✓ Highest Paying Ad section appears
+   ✓ Ad details visible (title, description, image)
+   ✓ "Earn ₹0.02 per view" badge
+   ✓ Unique share link displayed
+   ✓ "Where to Share" suggestions visible
+
+8. Click "Copy Link" button
+9. Verify button shows "Copied!" with green checkmark
+
+STEP 5: Test View Tracking
+---------------------------
+1. Copy the share link from viewer dashboard
+2. Open a NEW INCOGNITO/PRIVATE window
+3. Paste the link and press Enter
+4. You should see:
+   ✓ "Processing your view..." (loading state)
+   ✓ "View Recorded Successfully!" message
+   ✓ "You earned ₹0.02!" text
+   ✓ Ad image and details
+   ✓ Countdown: "Redirecting in 5 seconds..."
+   ✓ After 5 seconds, redirects to youtube.com
+
+5. Try clicking the same link again in same browser
+6. You should see:
+   ✓ "Already Viewed" message
+   ✓ "You have already viewed this ad from this device"
+   ✓ No money earned (duplicate prevention working)
+
+STEP 6: Verify Viewer Earnings
+-------------------------------
+1. Go back to viewer dashboard (http://localhost:3000/dashboard)
+2. Refresh the page
+3. Verify:
+   ✓ Total Earnings: ₹0.02 (increased!)
+   ✓ Total Views: 1 (increased!)
+
+STEP 7: Verify Advertiser Stats
+--------------------------------
+1. Logout from viewer account
+2. Login as advertiser (advertiser@gmail.com / test123)
+3. Verify dashboard shows:
+   ✓ Total Spent: ₹0.02 (increased!)
+   ✓ Total Views: 1 (increased!)
+   ✓ Ad shows: Views: 1
+   ✓ Ad shows: Budget: ₹99.98 / ₹100.00 (decreased!)
+
+4. Scroll down to "Top Viewers" section
+5. Verify:
+   ✓ Table shows viewer@gmail.com
+   ✓ Rank: #1
+   ✓ Views Generated: 1 views
+
+STEP 8: Test Multiple Viewers
+------------------------------
+1. Create another viewer account:
+   - Email: viewer2@gmail.com
+   - Password: test123
+   - Role: Viewer
+
+2. Copy the share link
+3. Open incognito window
+4. Paste link and view the ad
+5. Check advertiser dashboard again
+6. Verify "Top Viewers" shows both viewers:
+   ✓ viewer@gmail.com - 1 views
+   ✓ viewer2@gmail.com - 1 views
+
+STEP 9: Test Share Link Distribution
+-------------------------------------
+The viewer can share their link on:
+✓ WhatsApp groups
+✓ Facebook posts
+✓ Twitter tweets
+✓ Reddit comments
+✓ Telegram channels
+✓ Discord servers
+✓ Email to friends
+✓ YouTube comments
+✓ Instagram bio
+✓ TikTok bio
+
+Each unique device that clicks = 1 view = earnings for viewer
+
+STEP 10: Test Budget Exhaustion
+--------------------------------
+1. Create ad with small budget:
+   - Bid: ₹1.00
+   - Budget: ₹2.00
+   (This allows only 2 views)
+
+2. Generate 2 views from different devices
+3. Try to generate 3rd view
+4. Verify:
+   ✓ Ad status changes to "Inactive"
+   ✓ Ad no longer appears in viewer dashboard
+   ✓ Message: "This ad is no longer active"
+
+Expected Results Summary
+------------------------
+✅ Advertiser can create ads
+✅ Viewer sees highest-paying active ad
+✅ Viewer gets unique share link
+✅ Share link can be distributed anywhere
+✅ Each device counts only once
+✅ Viewer earns money per view
+✅ Advertiser budget decreases per view
+✅ Advertiser sees which viewers generated views
+✅ Top viewers ranked by view count
+✅ Duplicate views prevented
+✅ Ads auto-deactivate when budget exhausted
+
+Troubleshooting
+---------------
+Issue: "No active ads available"
+Fix: Make sure advertiser created an ad with:
+     - isActive: true
+     - remainingBudget > 0
+
+Issue: View not recording
+Fix: 
+1. Check browser console for errors
+2. Verify Firestore rules deployed
+3. Check Firebase Console > Firestore > views collection
+
+Issue: Earnings not updating
+Fix:
+1. Refresh the page
+2. Check Firebase Console > Firestore > users collection
+3. Verify "earnings" field updated
+
+Issue: Top Viewers not showing
+Fix:
+1. Make sure at least one view was generated
+2. Check views collection has "sharedBy" field
+3. Refresh advertiser dashboard
+
+Firebase Console Checks
+-----------------------
+1. Go to: https://console.firebase.google.com/project/hotel-saas-b84a8
+
+2. Check Firestore Database:
+   - users collection: Should have advertiser and viewer docs
+   - ads collection: Should have ad docs with isActive=true
+   - views collection: Should have view docs with sharedBy field
+
+3. Check Authentication:
+   - Should show registered users
+
+4. Check Storage:
+   - Should show uploaded ad images
+
+Success Criteria
+----------------
+✅ All 10 test steps pass
+✅ No console errors
+✅ Money flows correctly (viewer earns, advertiser pays)
+✅ View tracking works (one per device)
+✅ Top viewers ranking works
+✅ Share link can be distributed anywhere
+✅ System is robust and handles edge cases

@@ -1,0 +1,49 @@
+IMPORTANT: Deploy These Changes to Firebase
+============================================
+
+After making the code changes, you MUST deploy the updated Firestore rules and indexes:
+
+1. Open terminal in project directory
+2. Run this command:
+
+   firebase deploy --only firestore:rules,firestore:indexes
+
+3. Wait for deployment to complete
+4. Restart your dev server:
+   - Press Ctrl+C to stop
+   - Run: npm run dev
+
+What Changed:
+-------------
+✅ Fixed viewer dashboard to show active ads (removed complex query)
+✅ Added viewer tracking - tracks which viewer shared each link
+✅ Added "Top Viewers" table in advertiser dashboard
+✅ Shows viewer email and view count for each viewer
+✅ Updated view tracking to use "sharedBy" field
+✅ Fixed Firestore rules to allow public ad viewing
+✅ Updated indexes for new queries
+
+How It Works Now:
+-----------------
+1. Viewer gets unique share link for highest-paying ad
+2. Viewer shares link anywhere (social media, forums, etc.)
+3. When someone clicks the link:
+   - Device fingerprint is checked
+   - If new device: view is recorded with viewer's ID
+   - Viewer earns money
+   - Advertiser's budget decreases
+4. Advertiser can see which viewers generated the most views
+5. Viewer can see total views they generated
+
+Database Structure:
+-------------------
+views collection now has:
+- adId: which ad was viewed
+- sharedBy: which viewer shared the link (used to be "viewerId")
+- deviceId: fingerprint of viewing device
+- timestamp: when view occurred
+
+This allows tracking:
+- Total views per viewer (for viewer dashboard)
+- Which viewers drove views for advertiser's ads (for advertiser dashboard)
+- One view per device (fraud prevention)
