@@ -130,6 +130,20 @@ Or use the combined command:
 npm run deploy
 ```
 
+### Deploy to Vercel
+
+This project includes a `vercel.json` configuration file that handles SPA routing. This ensures that:
+- Direct URL access to any route works correctly
+- Page refreshes don't cause 404 errors
+- Shared links (e.g., `/view/:adId/:viewerId`) open properly
+
+To deploy to Vercel:
+1. Push your code to GitHub
+2. Import the project in Vercel dashboard
+3. Vercel will automatically detect the Vite configuration and deploy
+
+**Note**: The `vercel.json` file redirects all routes to `index.html`, allowing React Router to handle client-side routing.
+
 ## Project Structure
 
 ```
@@ -155,6 +169,7 @@ Ad Bids/
 │   └── index.css
 ├── public/
 ├── firebase.json
+├── vercel.json
 ├── firestore.rules
 ├── firestore.indexes.json
 ├── storage.rules
@@ -261,6 +276,14 @@ The app uses comprehensive security rules to protect data:
 - **Real-time Updates**: Efficient Firestore listeners
 
 ## Troubleshooting
+
+### 404 Errors on Vercel Deployment
+If you get 404 errors when:
+- Opening shared links (`/view/:adId/:viewerId`)
+- Accessing `/login` or other routes directly
+- Refreshing the page on any route
+
+**Solution**: Ensure `vercel.json` exists in the project root with the SPA routing configuration. This file redirects all routes to `index.html` so React Router can handle routing.
 
 ### Firestore Index Errors
 If you see index errors in the console, Firebase will provide a link to create the required index automatically.

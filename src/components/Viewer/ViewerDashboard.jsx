@@ -6,21 +6,20 @@ import { LogOut, DollarSign, Eye, Share2, Copy, CheckCircle } from 'lucide-react
 
 const ViewerDashboard = () => {
   const { currentUser, logout } = useAuth();
-  const [topAd, setTopAd] = useState(null);
+  const [ads, setAds] = useState([]);
   const [earnings, setEarnings] = useState(0);
   const [totalViews, setTotalViews] = useState(0);
-  const [shareLink, setShareLink] = useState('');
-  const [copied, setCopied] = useState(false);
+  const [copiedAdId, setCopiedAdId] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchTopAd();
+    fetchAds();
     fetchUserStats();
   }, [currentUser]);
 
-  const fetchTopAd = async () => {
+  const fetchAds = async () => {
     try {
-      // First, get all active ads with budget
+      // Get all active ads with budget
       const q = query(
         collection(db, 'ads'),
         where('isActive', '==', true)
@@ -37,19 +36,12 @@ const ViewerDashboard = () => {
         }
       });
       
-      // Sort by bidPerView descending
+      // Sort by bidPerView descending (highest bid first)
       activeAds.sort((a, b) => b.bidPerView - a.bidPerView);
       
-      if (activeAds.length > 0) {
-        const topAdData = activeAds[0];
-        setTopAd(topAdData);
-        
-        // Generate unique share link
-        const link = `${window.location.origin}/view/${topAdData.id}/${currentUser.uid}`;
-        setShareLink(link);
-      }
+      setAds(activeAds);
     } catch (error) {
-      console.error('Error fetching top ad:', error);
+      console.error('Error fetching ads:', error);
     } finally {
       setLoading(false);
     }
@@ -75,10 +67,11 @@ const ViewerDashboard = () => {
     }
   };
 
-  const handleCopyLink = () => {
+  const handleCopyLink = (adId) => {
+    const shareLink = `${window.location.origin}/view/${adId}/${currentUser.uid}`;
     navigator.clipboard.writeText(shareLink);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setCopiedAdId(adId);
+    setTimeout(() => setCopiedAdId(null), 2000);
   };
 
   const handleLogout = async () => {
@@ -93,187 +86,197 @@ const ViewerDashboard = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Viewer Dashboard</h1>
-              <p className="text-sm text-gray-600">{currentUser?.email}</p>
+            <div className="min-w-0 flex-1">
+              <h1 className="text-lg sm:text-2xl font-bold text-gray-900 truncate">Viewer Dashboard</h1>
+              <p className="text-xs sm:text-sm text-gray-600 truncate">{currentUser?.email}</p>
             </div>
             <button
               onClick={handleLogout}
-              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+              className="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm sm:text-base ml-2"
             >
               <LogOut className="w-4 h-4" />
-              Logout
+              <span className="hidden sm:inline">Logout</span>
             </button>
           </div>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg p-6 text-white">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-6 mb-4 sm:mb-8">
+          <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg p-4 sm:p-6 text-white">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-green-100 mb-1">Total Earnings</p>
-                <p className="text-4xl font-bold">₹{earnings.toFixed(2)}</p>
+                <p className="text-green-100 mb-1 text-sm sm:text-base">Total Earnings</p>
+                <p className="text-2xl sm:text-4xl font-bold">₹{earnings.toFixed(2)}</p>
               </div>
-              <div className="bg-white bg-opacity-20 p-3 rounded-full">
-                <DollarSign className="w-8 h-8" />
+              <div className="bg-white bg-opacity-20 p-2 sm:p-3 rounded-full">
+                <DollarSign className="w-6 h-6 sm:w-8 sm:h-8" />
               </div>
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
+          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-4 sm:p-6 text-white">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-blue-100 mb-1">Total Views</p>
-                <p className="text-4xl font-bold">{totalViews}</p>
+                <p className="text-blue-100 mb-1 text-sm sm:text-base">Total Views</p>
+                <p className="text-2xl sm:text-4xl font-bold">{totalViews}</p>
               </div>
-              <div className="bg-white bg-opacity-20 p-3 rounded-full">
-                <Eye className="w-8 h-8" />
+              <div className="bg-white bg-opacity-20 p-2 sm:p-3 rounded-full">
+                <Eye className="w-6 h-6 sm:w-8 sm:h-8" />
               </div>
             </div>
           </div>
         </div>
 
-        {/* Top Ad Section */}
+        {/* All Ads Section */}
         {loading ? (
-          <div className="bg-white rounded-xl shadow-sm p-8 text-center">
-            <p className="text-gray-600">Loading ads...</p>
+          <div className="bg-white rounded-xl shadow-sm p-6 sm:p-8 text-center">
+            <p className="text-gray-600 text-sm sm:text-base">Loading ads...</p>
           </div>
-        ) : topAd ? (
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-            <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-6 py-4">
-              <h2 className="text-xl font-semibold text-white flex items-center gap-2">
-                <Share2 className="w-5 h-5" />
-                Highest Paying Ad
+        ) : ads.length > 0 ? (
+          <div className="space-y-4 sm:space-y-6">
+            <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-4 sm:px-6 py-3 sm:py-4 rounded-t-xl">
+              <h2 className="text-lg sm:text-xl font-semibold text-white flex items-center gap-2">
+                <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                Available Ads (Sorted by Highest Bid)
               </h2>
             </div>
-
-            <div className="p-6">
-              <div className="flex flex-col md:flex-row gap-6 mb-6">
-                {topAd.imageUrl && (
-                  <img
-                    src={topAd.imageUrl}
-                    alt={topAd.title}
-                    className="w-full md:w-64 h-48 object-cover rounded-lg"
-                  />
+            
+            {ads.map((ad, index) => (
+              <div key={ad.id} className="bg-white rounded-xl shadow-sm overflow-hidden">
+                {index === 0 && (
+                  <div className="bg-gradient-to-r from-yellow-400 to-orange-400 px-3 sm:px-4 py-2">
+                    <p className="text-xs sm:text-sm font-bold text-white text-center">🏆 HIGHEST PAYING AD</p>
+                  </div>
                 )}
-                <div className="flex-1">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">{topAd.title}</h3>
-                  <p className="text-gray-600 mb-4">{topAd.description}</p>
-                  <div className="flex flex-wrap gap-4 mb-4">
-                    <div className="bg-green-50 px-4 py-2 rounded-lg">
-                      <p className="text-sm text-green-600 font-semibold">
-                        Earn ₹{topAd.bidPerView} per view
-                      </p>
-                    </div>
-                    <div className="bg-blue-50 px-4 py-2 rounded-lg">
-                      <p className="text-sm text-blue-600 font-semibold">
-                        {topAd.viewCount || 0} views
-                      </p>
-                    </div>
-                  </div>
-                  <a
-                    href={topAd.targetLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-indigo-600 hover:text-indigo-700 font-semibold"
-                  >
-                    Visit: {topAd.targetLink}
-                  </a>
-                </div>
-              </div>
-
-              {/* Share Link Section */}
-              <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl p-6 border-2 border-purple-200">
-                <div className="flex items-center gap-2 mb-3">
-                  <Share2 className="w-5 h-5 text-purple-600" />
-                  <h3 className="text-lg font-semibold text-gray-900">Your Unique Share Link</h3>
-                </div>
-                <p className="text-sm text-gray-600 mb-4">
-                  Share this link anywhere to earn ₹{topAd.bidPerView} per unique view! Each device counts only once.
-                </p>
-                <div className="flex gap-2 mb-4">
-                  <input
-                    type="text"
-                    value={shareLink}
-                    readOnly
-                    className="flex-1 px-4 py-3 bg-white border border-purple-300 rounded-lg text-sm font-mono"
-                  />
-                  <button
-                    onClick={handleCopyLink}
-                    className={`px-6 py-3 rounded-lg font-semibold transition flex items-center gap-2 whitespace-nowrap ${
-                      copied
-                        ? 'bg-green-600 text-white'
-                        : 'bg-purple-600 text-white hover:bg-purple-700'
-                    }`}
-                  >
-                    {copied ? (
-                      <>
-                        <CheckCircle className="w-5 h-5" />
-                        Copied!
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-5 h-5" />
-                        Copy Link
-                      </>
+                
+                <div className="p-3 sm:p-6">
+                  <div className="flex flex-col gap-4">
+                    {ad.imageUrl && (
+                      <img
+                        src={ad.imageUrl}
+                        alt={ad.title}
+                        className="w-full h-40 sm:h-48 object-cover rounded-lg"
+                      />
                     )}
-                  </button>
-                </div>
-                <div className="bg-white rounded-lg p-4 border border-purple-200">
-                  <p className="text-xs font-semibold text-purple-900 mb-2">💡 Where to Share:</p>
-                  <div className="grid grid-cols-2 gap-2 text-xs text-gray-700">
-                    <div>• Social Media (Facebook, Twitter, Instagram)</div>
-                    <div>• WhatsApp Groups</div>
-                    <div>• Reddit Communities</div>
-                    <div>• Telegram Channels</div>
-                    <div>• Discord Servers</div>
-                    <div>• Email to Friends</div>
-                    <div>• Forums & Blogs</div>
-                    <div>• YouTube Comments</div>
+                    <div className="flex-1">
+                      <h3 className="text-lg sm:text-2xl font-bold text-gray-900 mb-2">{ad.title}</h3>
+                      <p className="text-sm sm:text-base text-gray-600 mb-3 sm:mb-4">{ad.description}</p>
+                      <div className="flex flex-wrap gap-2 sm:gap-4 mb-3 sm:mb-4">
+                        <div className="bg-green-50 px-3 sm:px-4 py-2 rounded-lg">
+                          <p className="text-xs sm:text-sm text-green-600 font-semibold">
+                            Earn ₹{ad.bidPerView} per view
+                          </p>
+                        </div>
+                        <div className="bg-blue-50 px-3 sm:px-4 py-2 rounded-lg">
+                          <p className="text-xs sm:text-sm text-blue-600 font-semibold">
+                            {ad.viewCount || 0} views
+                          </p>
+                        </div>
+                      </div>
+                      <a
+                        href={ad.targetLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm sm:text-base text-indigo-600 hover:text-indigo-700 font-semibold break-all"
+                      >
+                        Visit: {ad.targetLink}
+                      </a>
+                    </div>
+                  </div>
+
+                  {/* Share Link Section */}
+                  <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl p-3 sm:p-6 border-2 border-purple-200 mt-4">
+                    <div className="flex items-center gap-2 mb-2 sm:mb-3">
+                      <Share2 className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
+                      <h3 className="text-sm sm:text-lg font-semibold text-gray-900">Your Unique Share Link</h3>
+                    </div>
+                    <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">
+                      Share this link anywhere to earn ₹{ad.bidPerView} per unique view! Each device counts only once.
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-2 mb-3 sm:mb-4">
+                      <input
+                        type="text"
+                        value={`${window.location.origin}/view/${ad.id}/${currentUser.uid}`}
+                        readOnly
+                        className="flex-1 px-3 sm:px-4 py-2 sm:py-3 bg-white border border-purple-300 rounded-lg text-xs sm:text-sm font-mono"
+                      />
+                      <button
+                        onClick={() => handleCopyLink(ad.id)}
+                        className={`px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2 whitespace-nowrap text-sm sm:text-base ${
+                          copiedAdId === ad.id
+                            ? 'bg-green-600 text-white'
+                            : 'bg-purple-600 text-white hover:bg-purple-700'
+                        }`}
+                      >
+                        {copiedAdId === ad.id ? (
+                          <>
+                            <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+                            Copied!
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-4 h-4 sm:w-5 sm:h-5" />
+                            Copy Link
+                          </>
+                        )}
+                      </button>
+                    </div>
+                    <div className="bg-white rounded-lg p-3 sm:p-4 border border-purple-200">
+                      <p className="text-xs font-semibold text-purple-900 mb-2">💡 Where to Share:</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2 text-xs text-gray-700">
+                        <div>• Social Media (Facebook, Twitter, Instagram)</div>
+                        <div>• WhatsApp Groups</div>
+                        <div>• Reddit Communities</div>
+                        <div>• Telegram Channels</div>
+                        <div>• Discord Servers</div>
+                        <div>• Email to Friends</div>
+                        <div>• Forums & Blogs</div>
+                        <div>• YouTube Comments</div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            ))}
           </div>
         ) : (
-          <div className="bg-white rounded-xl shadow-sm p-8 text-center">
-            <p className="text-gray-600">No active ads available at the moment.</p>
+          <div className="bg-white rounded-xl shadow-sm p-6 sm:p-8 text-center">
+            <p className="text-gray-600 text-sm sm:text-base">No active ads available at the moment.</p>
           </div>
         )}
 
         {/* How It Works */}
-        <div className="mt-8 bg-white rounded-xl shadow-sm p-6">
-          <h3 className="text-xl font-semibold text-gray-900 mb-4">How It Works</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="mt-4 sm:mt-8 bg-white rounded-xl shadow-sm p-4 sm:p-6">
+          <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3 sm:mb-4">How It Works</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
             <div className="text-center">
-              <div className="bg-indigo-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
-                <span className="text-xl font-bold text-indigo-600">1</span>
+              <div className="bg-indigo-100 w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-3">
+                <span className="text-lg sm:text-xl font-bold text-indigo-600">1</span>
               </div>
-              <h4 className="font-semibold text-gray-900 mb-2">Copy Your Link</h4>
-              <p className="text-sm text-gray-600">
-                Get your unique share link for the highest-paying ad
+              <h4 className="font-semibold text-gray-900 mb-1 sm:mb-2 text-sm sm:text-base">Copy Your Link</h4>
+              <p className="text-xs sm:text-sm text-gray-600">
+                Get your unique share link for any ad
               </p>
             </div>
             <div className="text-center">
-              <div className="bg-indigo-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
-                <span className="text-xl font-bold text-indigo-600">2</span>
+              <div className="bg-indigo-100 w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-3">
+                <span className="text-lg sm:text-xl font-bold text-indigo-600">2</span>
               </div>
-              <h4 className="font-semibold text-gray-900 mb-2">Share Everywhere</h4>
-              <p className="text-sm text-gray-600">
+              <h4 className="font-semibold text-gray-900 mb-1 sm:mb-2 text-sm sm:text-base">Share Everywhere</h4>
+              <p className="text-xs sm:text-sm text-gray-600">
                 Share on social media, forums, or with friends
               </p>
             </div>
             <div className="text-center">
-              <div className="bg-indigo-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
-                <span className="text-xl font-bold text-indigo-600">3</span>
+              <div className="bg-indigo-100 w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-3">
+                <span className="text-lg sm:text-xl font-bold text-indigo-600">3</span>
               </div>
-              <h4 className="font-semibold text-gray-900 mb-2">Earn Money</h4>
-              <p className="text-sm text-gray-600">
+              <h4 className="font-semibold text-gray-900 mb-1 sm:mb-2 text-sm sm:text-base">Earn Money</h4>
+              <p className="text-xs sm:text-sm text-gray-600">
                 Earn for each unique device that views the ad
               </p>
             </div>
